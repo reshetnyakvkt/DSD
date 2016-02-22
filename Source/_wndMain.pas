@@ -68,7 +68,7 @@ begin
   FImportManager := TImportManager.Create(Self, Application.ExeName);
   dsMain.DataSet := FImportManager.DataSet;
 
-  wndMain.edPathFile.Text := FImportManager.FileName;
+  FImportManager.FileName := wndMain.edPathFile.Text;
 end;
 
 procedure TwndMain.FormDestroy(Sender: TObject);

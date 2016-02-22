@@ -8,6 +8,9 @@ uses
   DB,
   NativeXml;
 
+const
+  C_AUTOSAVE_SETTINGS = false;
+
 type
   TFiledImport = class
   private
@@ -19,6 +22,7 @@ type
     Code : boolean;
     isUpperCase : Boolean;
     property FieldType: TFieldType read GetFieldType;
+    function GetValue(AValue: variant) : Variant;
     procedure SaveToXML(XMLNode: TXmlNode);
     constructor Create(XMLNode: TXmlNode); overload;
     constructor Create(AName, AFieldType: string; ACode, AIsUpperCase: Boolean); overload;
@@ -26,13 +30,19 @@ type
 
 type
   TSettingsImport = class
+  private
+    FSettingsFile : string;
+  public
     FieldImport: array of TFiledImport;
+    AutoSave : boolean;
+    property SettingsFile : string read FSettingsFile write FSettingsFile;
     function GenerateXML: string;
     procedure Load(FileName: string);
     procedure Save(FileName: string);
     procedure Init;
     constructor Create; overload;
     constructor Create(FileName: string); overload;
+    destructor Destroy; overload;
   end;
 
   function GetBooleanAttributeDef(Node: TXmlNode; AttributeName: string;
@@ -60,12 +70,21 @@ end;
 
 constructor TSettingsImport.Create;
 begin
+  AutoSave := C_AUTOSAVE_SETTINGS;
   Init;
 end;
 
 constructor TSettingsImport.Create(FileName: string);
 begin
-  Load(FileName);
+  AutoSave := C_AUTOSAVE_SETTINGS;
+  FSettingsFile := FileName;
+  Load(FSettingsFile);
+end;
+
+destructor TSettingsImport.Destroy;
+begin
+  if AutoSave then
+    Save(FSettingsFile);
 end;
 
 function TSettingsImport.GenerateXML: string;
@@ -96,7 +115,7 @@ begin
   FieldImport[0] := TFiledImport.Create('Name', '', false, false);
   FieldImport[1] := TFiledImport.Create('Birthday', 'DOB', false, false);
   FieldImport[2] := TFiledImport.Create('Salary', 'Amount', false, false);
-  FieldImport[3] := TFiledImport.Create('Surname', '',  true, false);
+  FieldImport[3] := TFiledImport.Create('Surname', '',  true, true);
 end;
 
 procedure TSettingsImport.Load(FileName: string);
@@ -154,14 +173,19 @@ end;
 
 function TFiledImport.GetFieldType: TFieldType;
 begin
-{
   if FFieldType = 'AMOUNT' then
     result := ftInteger
   else
     if FFieldType = 'DOB' then
       result := ftDateTime;
-}
   result := ftString
+end;
+
+function TFiledImport.GetValue(AValue: variant): Variant;
+begin
+  Result := AValue;
+  if isUpperCase and (GetFieldType = ftString) then
+    Result := AnsiUpperCase(Result);
 end;
 
 procedure TFiledImport.SaveToXML(XMLNode: TXmlNode);

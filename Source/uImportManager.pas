@@ -9,10 +9,6 @@ uses
   uSettingsImport,
   Variants;
 
-const
-  C_SC_MAIN = 'MAIN';
-  C_PAR_FILE = 'FILE';
-
 type
   TImportManager = class
   private
@@ -25,7 +21,6 @@ type
     FFileName : string;
     procedure SetFileName(const Value: string);
   private
-    FIniFile : TIniFile;
     FIniFileName : string;
   public
     DataSet : TClientDataSet;
@@ -50,19 +45,13 @@ begin
   FAppPath := ExtractFilePath(AppPath);
   FAppName := ExtractFileName(AppPath);
   FAppName := copy(FAppName, 1, length(FAppName) - Length(ExtractFileExt(FAppName)));
-  FIniFileName := Format('%s.%s', [FAppPath + FAppName, 'ini']);
-  FIniFile := TIniFile.Create(FIniFileName);
-
-  FileName := FIniFile.ReadString(C_SC_MAIN, C_PAR_FILE, '');
-  FSettingsFile := FAppPath + FAppName + '.xml';
   FSettingsImport := TSettingsImport.Create(FSettingsFile);
   DataSet := TClientDataSet.Create(FOwner);
 end;
 
 destructor TImportManager.Destroy;
 begin
-  FIniFile.Free;
-  FSettingsImport.Save(FSettingsFile);
+  FSettingsImport.Free;
 end;
 
 procedure TImportManager.Import;
@@ -72,23 +61,30 @@ var
   FImportDriverXLS: TImportDriverXLS;
   NumRow: Integer;
 
-  procedure ImportRow;
+  function ImportRow : boolean;
   var
     I: integer;
     FieldImport : TFiledImport;
     FieldValue: Variant;
     RowCancel : boolean;
   begin
+    Result := True;
     RowCancel := false;
-    DataSet.Insert;
+    DataSet.Append;
     for I := 0 to Pred(Length(FSettingsImport.FieldImport)) do
     begin
       FieldImport := FSettingsImport.FieldImport[I];
       FieldValue := FImportDriverXLS.ValueByName(FieldImport.Column);
-      DataSet.FieldByName(FieldImport.Name).Value := FieldValue;
-      if True then
-
-      RowCancel := true;
+      if not VarIsNull(FieldValue) and not VarIsEmpty(FieldValue) then
+        try
+          DataSet.FieldByName(FieldImport.Name).Value :=
+            FieldImport.GetValue(FieldValue);
+        except
+          Result := False;
+        end
+      else
+        if FieldImport.Code then
+          RowCancel := true;
     end;
     if not RowCancel then
       DataSet.Post
@@ -114,7 +110,12 @@ var
         then
         begin
           FieldImport.Column := IntToStr(J);
-          DataSet.FieldDefs.Add(FieldValue, FieldImport.FieldType);
+          case FieldImport.FieldType of
+            ftString:
+              DataSet.FieldDefs.Add(FieldValue, FieldImport.FieldType, 256, False);
+          else
+            DataSet.FieldDefs.Add(FieldValue, FieldImport.FieldType, 0, False);
+          end;
           break;
         end;
       end;
@@ -133,17 +134,20 @@ begin
     begin
       if NeedStop then
         Break;
-      if NumRow = 1 then
-        InitField;
 
-      ImportRow;
-      FImportDriverXLS.Next;
+      if NumRow = 1 then
+        InitField
+      else
+        ImportRow;
+
       inc(NumRow);
+      FImportDriverXLS.Next;
       if (NumRow mod StepRow = 0) then
         StepProgress('', StepRow);
     end;
   finally
     HideProgress;
+    FImportDriverXLS.Close;
     FImportDriverXLS.Free;
   end;
 end;
@@ -151,8 +155,6 @@ end;
 procedure TImportManager.SetFileName(const Value: string);
 begin
   FFileName := Value;
-  FIniFile.WriteString(C_SC_MAIN, C_PAR_FILE, FFileName);
-  FIniFile.UpdateFile;
 end;
 
 end.

@@ -70,7 +70,7 @@ end;
 
 function TImportDriverXLS.Eof: boolean;
 begin
-  Result := False;
+  Result := FRowIdx > FRowMax;
 end;
 
 procedure TImportDriverXLS.Next;

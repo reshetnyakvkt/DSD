@@ -31,6 +31,7 @@ object wndMain: TwndMain
     BevelOuter = bvNone
     BorderStyle = bsNone
     TabOrder = 0
+    Text = 'C:\PROJECTS\'#1076#1089#1076'\Files\File.xls'
   end
   object btnOpen: TButton
     Left = 570
@@ -51,6 +52,7 @@ object wndMain: TwndMain
     Margins.Top = 40
     Align = alClient
     DataSource = dsMain
+    DrawingStyle = gdsGradient
     TabOrder = 2
     TitleFont.Charset = DEFAULT_CHARSET
     TitleFont.Color = clWindowText
