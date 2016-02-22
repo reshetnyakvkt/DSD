@@ -25,7 +25,7 @@ type
     { Methods & Properties }
     function Add: IXMLFieldImportType; overload;
     function Add(AName, AColumn, AFieldType : string;
-      ACode, AUpperCase: boolean): IXMLFieldImportType; overload;
+      ACode: boolean): IXMLFieldImportType; overload;
     function Insert(const Index: Integer): IXMLFieldImportType;
     property FieldImport[Index: Integer]: IXMLFieldImportType read Get_FieldImport; default;
   end;
@@ -39,20 +39,19 @@ type
     function Get_Column: UnicodeString;
     function Get_FieldType: UnicodeString;
     function Get_Code: Boolean;
-    function Get_UpperCase: Boolean;
     procedure Set_Name(Value: UnicodeString);
     procedure Set_Column(Value: UnicodeString);
     procedure Set_FieldType(Value: UnicodeString);
     procedure Set_Code(Value: Boolean);
-    procedure Set_UpperCase(Value: Boolean);
     { Methods & Properties }
     property Name: UnicodeString read Get_Name write Set_Name;
     property Column: UnicodeString read Get_Column write Set_Column;
     property FieldType: UnicodeString read Get_FieldType write Set_FieldType;
     property Code: Boolean read Get_Code write Set_Code;
-    property UpperCase: Boolean read Get_UpperCase write Set_UpperCase;
+    function UpperCase(Value: string): String;
+    function LowerCase(Value: string): String;
+    function StrToInt(Value: string): Integer;
     function GetFieldType: TFieldType;
-    function GetValue(AValue: variant): Variant;
   end;
 
 { Forward Decls }
@@ -68,7 +67,7 @@ type
     function Get_FieldImport(Index: Integer): IXMLFieldImportType;
     function Add: IXMLFieldImportType; overload;
     function Add(AName, AColumn, AFieldType : string;
-      ACode, AUpperCase: boolean): IXMLFieldImportType; overload;
+      ACode: boolean): IXMLFieldImportType; overload;
     function Insert(const Index: Integer): IXMLFieldImportType;
   public
     procedure AfterConstruction; override;
@@ -83,14 +82,14 @@ type
     function Get_Column: UnicodeString;
     function Get_FieldType: UnicodeString;
     function Get_Code: Boolean;
-    function Get_UpperCase: Boolean;
     procedure Set_Name(Value: UnicodeString);
     procedure Set_Column(Value: UnicodeString);
     procedure Set_FieldType(Value: UnicodeString);
     procedure Set_Code(Value: Boolean);
-    procedure Set_UpperCase(Value: Boolean);
-    function GetValue(AValue: variant): Variant;
     function GetFieldType: TFieldType;
+    function UpperCase(Value: string): String;
+    function LowerCase(Value: string): String;
+    function StrToInt(Value: string): Integer;
   end;
 
 { Global Functions }
@@ -125,23 +124,22 @@ end;
 function DefaultSettingsImport: IXMLSettingsImportType;
 begin
   Result := NewSettingsImport;
-  Result.Add('Name', '', '', false, false);
-  Result.Add('Birthday', 'DOB', '', false, false);
-  Result.Add('Salary', 'AMOUNT', '', false, false);
-  Result.Add('Surname', '', '', true, true);
+  Result.Add('Name', '', '', false);
+  Result.Add('Birthday', 'DOB', '', false);
+  Result.Add('Salary', 'AMOUNT', '', false);
+  Result.Add('Surname', '', '', true);
 end;
 
 { TXMLSettingsImportType }
 
-function TXMLSettingsImportType.Add(AName, AColumn, AFieldType: string; ACode,
-  AUpperCase: boolean): IXMLFieldImportType;
+function TXMLSettingsImportType.Add(AName, AColumn, AFieldType: string;
+  ACode: boolean): IXMLFieldImportType;
 begin
   Result := AddItem(-1) as IXMLFieldImportType;
   Result.Name := AName;
   Result.Column := AColumn;
   Result.FieldType := AFieldType;
   Result.Code := ACode;
-  Result.UpperCase := AUpperCase;
 end;
 
 procedure TXMLSettingsImportType.AfterConstruction;
@@ -179,6 +177,17 @@ begin
   SetAttribute('Name', Value);
 end;
 
+
+function TXMLFieldImportType.StrToInt(Value: string): Integer;
+begin
+
+end;
+
+function TXMLFieldImportType.UpperCase(Value: string): String;
+begin
+  Result := AnsiUpperCase(Value);
+end;
+
 function TXMLFieldImportType.Get_Column: UnicodeString;
 begin
   Result := AttributeNodes['Column'].Text;
@@ -209,13 +218,6 @@ begin
   result := ftString
 end;
 
-function TXMLFieldImportType.GetValue(AValue: variant): Variant;
-begin
-  Result := AValue;
-  if Get_UpperCase and (GetFieldType = ftString) then
-    Result := AnsiUpperCase(Result);
-end;
-
 function TXMLFieldImportType.Get_Code: Boolean;
 begin
   Result := AttributeNodes['Code'].NodeValue;
@@ -226,14 +228,9 @@ begin
   SetAttribute('Code', Value);
 end;
 
-function TXMLFieldImportType.Get_UpperCase: Boolean;
+function TXMLFieldImportType.LowerCase(Value: string): String;
 begin
-  Result := AttributeNodes['UpperCase'].NodeValue;
-end;
 
-procedure TXMLFieldImportType.Set_UpperCase(Value: Boolean);
-begin
-  SetAttribute('UpperCase', Value);
 end;
 
 end.

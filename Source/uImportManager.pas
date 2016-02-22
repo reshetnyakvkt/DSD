@@ -8,7 +8,7 @@ uses
   IniFiles,
   Variants,
   Xml.xmldom, Xml.XMLIntf, Xml.XMLDoc,
-  uImportExcel;
+  uImportSettings;
 
 type
   TImportManager = class
@@ -71,8 +71,7 @@ var
       FieldValue := FImportDriverXLS.ValueByName(FXML.FieldImport[I].Column);
       if not VarIsNull(FieldValue) and not VarIsEmpty(FieldValue) then
         try
-          DataSet.FieldByName(FXML.FieldImport[I].Name).Value :=
-            FXML.FieldImport[I].GetValue(FieldValue);
+          DataSet.FieldByName(FXML.FieldImport[I].Name).Value := FieldValue;
         except
           Result := False;
         end

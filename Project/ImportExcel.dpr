@@ -14,7 +14,7 @@ uses
   sdStringTable in '..\Source\NativeXML\sdStringTable.pas',
   uImportManager in '..\Source\uImportManager.pas',
   _wndProgress in '..\Source\_wndProgress.pas' {wndProgress},
-  uImportExcel in '..\Source\uImportExcel.pas';
+  uImportSettings in '..\Source\uImportSettings.pas';
 
 {$R *.res}
 
