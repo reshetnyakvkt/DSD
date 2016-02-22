@@ -67,7 +67,6 @@ procedure TwndMain.FormCreate(Sender: TObject);
 begin
   FImportManager := TImportManager.Create(Self, Application.ExeName);
   dsMain.DataSet := FImportManager.DataSet;
-
   FImportManager.FileName := wndMain.edPathFile.Text;
 end;
 

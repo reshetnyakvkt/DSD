@@ -6,17 +6,18 @@ uses
   System.SysUtils, System.Classes,
   Data.DB, Datasnap.DBClient,
   IniFiles,
-  uSettingsImport,
-  Variants;
+  Variants,
+  Xml.xmldom, Xml.XMLIntf, Xml.XMLDoc,
+  uImportExcel;
 
 type
   TImportManager = class
   private
     FOwner: TComponent;
+    FXML: IXMLSettingsImportType;
     FAppPath : string;
     FAppName : string;
     FSettingsFile : string;
-    FSettingsImport : TSettingsImport;
   private
     FFileName : string;
     procedure SetFileName(const Value: string);
@@ -27,14 +28,13 @@ type
     property FileName : string read FFileName write SetFileName;
   public
     procedure Import;
-    constructor Create(AOwner : TComponent; AppPath : String);
-    destructor Destroy; override;
+    constructor Create(AOwner : TComponent; AppPath : String); overload;
   end;
 
 implementation
 
 uses
-  uImportXLS,
+  uImportDriverXLS,
   _wndProgress;
 
 { TImportManager }
@@ -45,13 +45,8 @@ begin
   FAppPath := ExtractFilePath(AppPath);
   FAppName := ExtractFileName(AppPath);
   FAppName := copy(FAppName, 1, length(FAppName) - Length(ExtractFileExt(FAppName)));
-  FSettingsImport := TSettingsImport.Create(FSettingsFile);
   DataSet := TClientDataSet.Create(FOwner);
-end;
-
-destructor TImportManager.Destroy;
-begin
-  FSettingsImport.Free;
+  FXML := DefaultSettingsImport;
 end;
 
 procedure TImportManager.Import;
@@ -64,26 +59,25 @@ var
   function ImportRow : boolean;
   var
     I: integer;
-    FieldImport : TFiledImport;
     FieldValue: Variant;
     RowCancel : boolean;
   begin
     Result := True;
     RowCancel := false;
     DataSet.Append;
-    for I := 0 to Pred(Length(FSettingsImport.FieldImport)) do
+
+    for I := 0 to Pred(FXML.ChildNodes.Count) do
     begin
-      FieldImport := FSettingsImport.FieldImport[I];
-      FieldValue := FImportDriverXLS.ValueByName(FieldImport.Column);
+      FieldValue := FImportDriverXLS.ValueByName(FXML.FieldImport[I].Column);
       if not VarIsNull(FieldValue) and not VarIsEmpty(FieldValue) then
         try
-          DataSet.FieldByName(FieldImport.Name).Value :=
-            FieldImport.GetValue(FieldValue);
+          DataSet.FieldByName(FXML.FieldImport[I].Name).Value :=
+            FXML.FieldImport[I].GetValue(FieldValue);
         except
           Result := False;
         end
       else
-        if FieldImport.Code then
+        if FXML.FieldImport[I].Code then
           RowCancel := true;
     end;
     if not RowCancel then
@@ -96,26 +90,27 @@ var
   var
     I: integer;
     J: integer;
-    FieldImport : TFiledImport;
     FieldValue: Variant;
   begin
     DataSet.FieldDefs.Clear;
     for J := 1 to FImportDriverXLS.ColMax do
-      for I := 0 to Pred(Length(FSettingsImport.FieldImport)) do
+      for I := 0 to Pred(FXML.Count) do
       begin
-        FieldImport := FSettingsImport.FieldImport[I];
         FieldValue := FImportDriverXLS.ValueByName(IntToStr(J));
         if (not VarIsNull(FieldValue))
-          and (AnsiUpperCase(FieldValue) = AnsiUpperCase(FieldImport.Name))
+          and (AnsiUpperCase(FieldValue) = AnsiUpperCase(FXML.FieldImport[I].Name))
         then
         begin
-          FieldImport.Column := IntToStr(J);
-          case FieldImport.FieldType of
+          FXML.FieldImport[I].Column := IntToStr(J);
+          case FXML.FieldImport[I].GetFieldType of
             ftString:
-              DataSet.FieldDefs.Add(FieldValue, FieldImport.FieldType, 256, False);
+              DataSet.FieldDefs.Add(FieldValue, FXML.FieldImport[I].GetFieldType,
+                256, False);
           else
-            DataSet.FieldDefs.Add(FieldValue, FieldImport.FieldType, 0, False);
+            DataSet.FieldDefs.Add(FieldValue, FXML.FieldImport[I].GetFieldType,
+              0, False)
           end;
+
           break;
         end;
       end;

@@ -3,8 +3,7 @@
 uses
   Vcl.Forms,
   _wndMain in '..\Source\_wndMain.pas' {wndMain},
-  uImportXLS in '..\Source\uImportXLS.pas',
-  uSettingsImport in '..\Source\uSettingsImport.pas',
+  uImportDriverXLS in '..\Source\uImportDriverXLS.pas',
   NativeXml in '..\Source\NativeXML\NativeXml.pas',
   NativeXmlObjectStorage in '..\Source\NativeXML\NativeXmlObjectStorage.pas',
   sdBufferParser in '..\Source\NativeXML\sdBufferParser.pas',
@@ -14,7 +13,8 @@ uses
   sdStringEncoding in '..\Source\NativeXML\sdStringEncoding.pas',
   sdStringTable in '..\Source\NativeXML\sdStringTable.pas',
   uImportManager in '..\Source\uImportManager.pas',
-  _wndProgress in '..\Source\_wndProgress.pas' {wndProgress};
+  _wndProgress in '..\Source\_wndProgress.pas' {wndProgress},
+  uImportExcel in '..\Source\uImportExcel.pas';
 
 {$R *.res}
 
