@@ -7,9 +7,16 @@ uses
   XMLDoc,
   XMLIntf,
   DB,
+  Rtti,
+  System.Classes,
+  System.SysUtils,
   System.AnsiStrings;
 
 type
+  TXMLFieldType = record
+    Name: string;
+    FType: TFieldType;
+  end;
 
 { Forward Decls }
 
@@ -24,7 +31,7 @@ type
     function Get_FieldImport(Index: Integer): IXMLFieldImportType;
     { Methods & Properties }
     function Add: IXMLFieldImportType; overload;
-    function Add(AName, AColumn, AFieldType : string;
+    function Add(AName, AFieldType, AFunctionName : string;
       ACode: boolean): IXMLFieldImportType; overload;
     function Insert(const Index: Integer): IXMLFieldImportType;
     property FieldImport[Index: Integer]: IXMLFieldImportType read Get_FieldImport; default;
@@ -39,19 +46,20 @@ type
     function Get_Column: UnicodeString;
     function Get_FieldType: UnicodeString;
     function Get_Code: Boolean;
+    function Get_FunctionName: UnicodeString;
     procedure Set_Name(Value: UnicodeString);
     procedure Set_Column(Value: UnicodeString);
     procedure Set_FieldType(Value: UnicodeString);
     procedure Set_Code(Value: Boolean);
+    procedure Set_FunctionName(Value: UnicodeString);
     { Methods & Properties }
     property Name: UnicodeString read Get_Name write Set_Name;
     property Column: UnicodeString read Get_Column write Set_Column;
     property FieldType: UnicodeString read Get_FieldType write Set_FieldType;
     property Code: Boolean read Get_Code write Set_Code;
-    function UpperCase(Value: string): String;
-    function LowerCase(Value: string): String;
-    function StrToInt(Value: string): Integer;
+    property FunctionName: UnicodeString read Get_FunctionName write Set_FunctionName;
     function GetFieldType: TFieldType;
+    function GetValue(Value: variant): variant;
   end;
 
 { Forward Decls }
@@ -66,30 +74,41 @@ type
     { IXMLSettingsImportType }
     function Get_FieldImport(Index: Integer): IXMLFieldImportType;
     function Add: IXMLFieldImportType; overload;
-    function Add(AName, AColumn, AFieldType : string;
+    function Add(AName, AFieldType, AFunctionName : string;
       ACode: boolean): IXMLFieldImportType; overload;
     function Insert(const Index: Integer): IXMLFieldImportType;
   public
     procedure AfterConstruction; override;
   end;
 
+  TFunc = function(Value: variant): variant of object;
+
 { TXMLFieldImportType }
+  TXMLFunctions = class(TPersistent)
+  public
+    class function UpperCase(Value: variant): variant;
+    class function LowerCase(Value: variant): variant;
+    class function StrToInt(Value: variant): variant;
+    class function Func(Value: variant): variant;
+    class function FindMethodByName(AName : String) : TFunc;
+  end;
 
   TXMLFieldImportType = class(TXMLNode, IXMLFieldImportType)
   protected
+    Func : TFunc;
     { IXMLFieldImportType }
     function Get_Name: UnicodeString;
     function Get_Column: UnicodeString;
     function Get_FieldType: UnicodeString;
     function Get_Code: Boolean;
+    function Get_FunctionName: UnicodeString;
     procedure Set_Name(Value: UnicodeString);
     procedure Set_Column(Value: UnicodeString);
     procedure Set_FieldType(Value: UnicodeString);
     procedure Set_Code(Value: Boolean);
+    procedure Set_FunctionName(Value: UnicodeString);
     function GetFieldType: TFieldType;
-    function UpperCase(Value: string): String;
-    function LowerCase(Value: string): String;
-    function StrToInt(Value: string): Integer;
+    function GetValue(Value: variant): variant;
   end;
 
 { Global Functions }
@@ -101,6 +120,12 @@ function DefaultSettingsImport: IXMLSettingsImportType;
 
 const
   TargetNamespace = '';
+  XMLFieldTypes : array [0..3] of TXMLFieldType = (
+    (Name: 'String';  FType: ftString),
+    (Name: 'Integer'; FType: ftInteger),
+    (Name: 'Date'; FType: ftDate),
+    (Name: 'Float'; FType: ftFloat)
+  );
 
 implementation
 
@@ -124,20 +149,22 @@ end;
 function DefaultSettingsImport: IXMLSettingsImportType;
 begin
   Result := NewSettingsImport;
-  Result.Add('Name', '', '', false);
-  Result.Add('Birthday', 'DOB', '', false);
-  Result.Add('Salary', 'AMOUNT', '', false);
-  Result.Add('Surname', '', '', true);
+  Result.Add('Name',     'String',  'UpperCase', false);
+  Result.Add('Birthday', 'Date',    'Age',  false);
+  Result.Add('Salary',   'Integer', '', false);
+  Result.Add('Surname',  'String',  'LowerCase', true);
+  Result.Add('DOB',      '',        '', false);
+  Result.Add('AMOUNT',   '',        '', false);
 end;
 
 { TXMLSettingsImportType }
 
-function TXMLSettingsImportType.Add(AName, AColumn, AFieldType: string;
+function TXMLSettingsImportType.Add(AName, AFieldType, AFunctionName: string;
   ACode: boolean): IXMLFieldImportType;
 begin
   Result := AddItem(-1) as IXMLFieldImportType;
   Result.Name := AName;
-  Result.Column := AColumn;
+  Result.FunctionName := AFunctionName;
   Result.FieldType := AFieldType;
   Result.Code := ACode;
 end;
@@ -177,17 +204,6 @@ begin
   SetAttribute('Name', Value);
 end;
 
-
-function TXMLFieldImportType.StrToInt(Value: string): Integer;
-begin
-
-end;
-
-function TXMLFieldImportType.UpperCase(Value: string): String;
-begin
-  Result := AnsiUpperCase(Value);
-end;
-
 function TXMLFieldImportType.Get_Column: UnicodeString;
 begin
   Result := AttributeNodes['Column'].Text;
@@ -203,19 +219,47 @@ begin
   Result := AttributeNodes['FieldType'].Text;
 end;
 
+function TXMLFieldImportType.Get_FunctionName: UnicodeString;
+begin
+  Result := AttributeNodes['FuntionName'].Text;
+end;
+
 procedure TXMLFieldImportType.Set_FieldType(Value: UnicodeString);
 begin
   SetAttribute('FieldType', Value);
+
+end;
+
+procedure TXMLFieldImportType.Set_FunctionName(Value: UnicodeString);
+begin
+  SetAttribute('FuntionName', Value);
+  Func := TXMLFunctions.FindMethodByName(Value);
 end;
 
 function TXMLFieldImportType.GetFieldType: TFieldType;
+var
+  FTypeName: String;
+  I: integer;
 begin
-  if Get_FieldType = 'AMOUNT' then
+  FTypeName := UpperCase(Get_FieldType);
+  Result := ftString;
+  if UpperCase(Get_Name) = 'AMOUNT' then
     result := ftInteger
   else
-    if Get_FieldType = 'DOB' then
-      result := ftDateTime;
-  result := ftString
+    if UpperCase(Get_Name) = 'DOB' then
+      result := ftDateTime
+    else
+      for I := Low(XMLFieldTypes) to High(XMLFieldTypes) do
+        if XMLFieldTypes[I].Name = FTypeName then
+        begin
+          Result := XMLFieldTypes[I].FType;
+          Break;
+        end;
+end;
+
+function TXMLFieldImportType.GetValue(Value: variant): variant;
+begin
+  Result := Func(Value);
 end;
 
 function TXMLFieldImportType.Get_Code: Boolean;
@@ -228,9 +272,57 @@ begin
   SetAttribute('Code', Value);
 end;
 
-function TXMLFieldImportType.LowerCase(Value: string): String;
-begin
+{ TXMLFunctions }
 
+class function TXMLFunctions.FindMethodByName(AName: String): TFunc;
+var
+  R : TRttiContext;
+  T : TRttiType;
+  M : TRttiMethod;
+  FormClass : TPersistentClass;
+  FExists : boolean;
+begin
+  Result := nil;
+  FExists := false;
+  T := R.GetType(TXMLFunctions);
+
+  if Assigned(T) then
+    for M in T.GetMethods do
+      if (M.Parent = T) and (M.Name = AName) then
+      begin
+        TMethod(Result).Code := M.CodeAddress;
+        TMethod(Result).Data := FormClass;
+        FExists := true;
+      end;
+  if not FExists then
+  begin
+    M := T.GetMethod('Func');
+    TMethod(Result).Code := M.CodeAddress;
+    TMethod(Result).Data := FormClass;
+  end;
 end;
+
+class function TXMLFunctions.Func(Value: variant): variant;
+begin
+  Result := Value;
+end;
+
+class function TXMLFunctions.LowerCase(Value: variant): variant;
+begin
+  Result := AnsiLowerCase(Value);
+end;
+
+class function TXMLFunctions.StrToInt(Value: variant): variant;
+begin
+  Result := System.SysUtils.StrToInt(Value);
+end;
+
+class function TXMLFunctions.UpperCase(Value: variant): variant;
+begin
+  Result := AnsiUpperCase(Value);
+end;
+
+Initialization
+  RegisterClass(TXMLFunctions);
 
 end.

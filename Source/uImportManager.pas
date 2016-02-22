@@ -68,10 +68,14 @@ var
 
     for I := 0 to Pred(FXML.ChildNodes.Count) do
     begin
+      if FXML.FieldImport[I].Column = '' then
+        Continue;
+
       FieldValue := FImportDriverXLS.ValueByName(FXML.FieldImport[I].Column);
       if not VarIsNull(FieldValue) and not VarIsEmpty(FieldValue) then
         try
-          DataSet.FieldByName(FXML.FieldImport[I].Name).Value := FieldValue;
+          DataSet.FieldByName(FXML.FieldImport[I].Name).Value :=
+            FXML.FieldImport[I].GetValue(FieldValue);
         except
           Result := False;
         end
