@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Condition>
+	<MyName1>
+		<Field name="Name" type="String" function="UpperCase" SkipRowIfEmpty="False"/>
+		<Field name="Surname" function="LowerCase" SkipRowIfEmpty="True"/>
+		<Field name="Birthday" type="Date" function="Age"/>
+		<Field name="Salary" type="Integer"/>
+		<Field name="DOB"/>
+		<Field name="AMOUNT"/>
+        </MyName1>
+	<MyName33>
+		<Field name="Name" type="String" function="UpperCase" SkipRowIfEmpty="False"/>
+		<Field name="Salary" type="Integer"/>
+        </MyName33>
+	<MyNameAny>
+		<Field name="Name" type="String" function="UpperCase" SkipRowIfEmpty="False"/>
+        </MyNameAny>
+</Condition>

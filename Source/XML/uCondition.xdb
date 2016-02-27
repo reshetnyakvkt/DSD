@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xdb="http://www.borland.com/schemas/delphi/10.0/XMLDataBinding">
+  <element xmlns="http://www.w3.org/2001/XMLSchema" name="Condition" type="ConditionType"/>
+  <complexType xmlns="http://www.w3.org/2001/XMLSchema" name="ConditionType"><annotation>
+      <appinfo xdb:docElement="Condition"/>
+    </annotation>
+    <sequence>
+      <element name="Field" type="FieldType" maxOccurs="unbounded"/>
+    </sequence>
+    <attribute name="Name" type="xs:string"/>
+  </complexType>
+  <complexType xmlns="http://www.w3.org/2001/XMLSchema" name="FieldType">
+    <attribute name="name" type="xs:string"/>
+    <attribute name="type" type="xs:string"/>
+    <attribute name="function" type="xs:string"/>
+    <attribute name="SkipRowIfEmpty" type="xs:string"><annotation>
+        <appinfo xdb:dataType="Boolean"/>
+      </annotation>
+    </attribute>
+  </complexType>
+</xs:schema>

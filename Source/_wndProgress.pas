@@ -4,10 +4,12 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, Menus, StdCtrls, cxButtons, ImgList, ActnList, System.Actions,
-  Vcl.ComCtrls, dxGDIPlusClasses, Vcl.ExtCtrls;
+//  Vcl.ComCtrls, Vcl.ExtCtrls,
+  ComCtrls, ExtCtrls,
+  Dialogs, Menus, StdCtrls,  ImgList, ActnList;
 
 type
+
   TwndProgress = class(TForm)
     alProcess: TActionList;
     actCancel: TAction;
@@ -108,6 +110,7 @@ begin
 
   wndProgress.lblCaption.Caption := wndProgress.Caption + '...' + nCaption;
   wndProgress.pbProgress.Position := wndProgress.pbProgress.Position + Value;
+  wndProgress.Invalidate;
 
   Application.ProcessMessages;
 end;
@@ -116,7 +119,7 @@ end;
 
 procedure TwndProgress.actCancelExecute(Sender: TObject);
 begin
-  if Dialogs.MessageDlg('Вы уверены что хотите остановить?',
+  if Dialogs.MessageDlg('Are you sure to stop process?',
       mtConfirmation, [mbYes, mbNo], 0, mbYes) = mrYes
   then
   begin

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Condition Name="My_name">
+	<Field name="Name" type="String" function="UpperCase" SkipRowIfEmpty="False"/>
+	<Field name="Surname" function="LowerCase" SkipRowIfEmpty="True"/>
+	<Field name="Birthday" type="Date" function="Age"/>
+	<Field name="Salary" type="Integer"/>
+	<Field name="DOB"/>
+	<Field name="AMOUNT"/>
+</Condition>

@@ -1,20 +1,14 @@
 ﻿program ImportExcel;
 
 uses
-  Vcl.Forms,
+  Forms,
   _wndMain in '..\Source\_wndMain.pas' {wndMain},
   uImportDriverXLS in '..\Source\uImportDriverXLS.pas',
-  NativeXml in '..\Source\NativeXML\NativeXml.pas',
-  NativeXmlObjectStorage in '..\Source\NativeXML\NativeXmlObjectStorage.pas',
-  sdBufferParser in '..\Source\NativeXML\sdBufferParser.pas',
-  sdDebug in '..\Source\NativeXML\sdDebug.pas',
-  sdSortedLists in '..\Source\NativeXML\sdSortedLists.pas',
-  sdStreams in '..\Source\NativeXML\sdStreams.pas',
-  sdStringEncoding in '..\Source\NativeXML\sdStringEncoding.pas',
-  sdStringTable in '..\Source\NativeXML\sdStringTable.pas',
   uImportManager in '..\Source\uImportManager.pas',
   _wndProgress in '..\Source\_wndProgress.pas' {wndProgress},
-  uImportSettings in '..\Source\uImportSettings.pas';
+  _utils in '..\Source\_utils.pas',
+  uImportFunctions in '..\Source\uImportFunctions.pas',
+  uImportCondition in '..\Source\uImportCondition.pas';
 
 {$R *.res}
 

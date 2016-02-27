@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<SettingsImport>
-	<FieldImport Name="Name" FieldType="" Code="False" UpperCase="False" Column=""/>
-	<FieldImport Name="Birthday" FieldType="DOB" Code="False" UpperCase="False" Column=""/>
-	<FieldImport Name="Salary" FieldType="AMOUNT" Code="False" UpperCase="False" Column=""/>
-	<FieldImport Name="Surname" FieldType="" Code="True" UpperCase="True" Column=""/>
-</SettingsImport>
